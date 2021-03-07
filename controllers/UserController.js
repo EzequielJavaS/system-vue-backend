@@ -114,7 +114,7 @@ export default {
     login: async (req, res, next)=>{
         try {
             // Consulto si el mail del usuario existe y el usuario es activo
-            let user = await models.User.findOne({email:req.body.email, activate:1});
+            let user = await models.User.findOne({email:req.body.email, state:1});
             if (user){
                 //Compruebo que los password concuerdan
                 let match = await bcrypt.compare(req.body.password, user.password);
@@ -129,7 +129,7 @@ export default {
                 }
             }else{
                 res.status(404).send({
-                    message: 'No existe usuario'
+                    message: 'No existe usuario login'
                 });
             }           
         } catch (error) {
