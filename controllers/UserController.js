@@ -1,13 +1,14 @@
 import models from '../models'
 import { model } from 'mongoose';
 import bcrypt from 'bcryptjs'
+import token from '../services/token';
 
 export default {
     add: async (req, res, next) =>{
         try {
             req.body.password = await bcrypt.hash(req.body.password, 10);
             const reg = await models.User.create(req.body);
-            res.status(200).json(reg);
+            res.status(201).json(reg);
         } catch (error) {
             res.status(500).send({
                 message: 'Ocurrió un error en al crear usuario'
@@ -27,7 +28,7 @@ export default {
             }
         } catch (error) {
             res.status(500).send({
-                message: 'Ocurrió un error'
+                message: 'Ocurrió un error en query'
             });
             next(error);   
         }
@@ -66,7 +67,7 @@ export default {
             res.status(200).json(reg);
         } catch (error) {
             res.status(500).send({
-                message: 'Ocurrió un error'
+                message: 'Ocurrió un error en update'
             });
             next(error);   
         }
@@ -91,7 +92,7 @@ export default {
             res.status(200).json(reg);
         } catch (error) {
             res.status(500).send({
-                message: 'Ocurrió un error'
+                message: 'Ocurrió un error en activate'
             });
             next(error);   
         }
@@ -104,7 +105,7 @@ export default {
             
         } catch (error) {
             res.status(500).send({
-                message: 'Ocurrió un error'
+                message: 'Ocurrió un error en deactivate'
             });
             next(error);   
         }
@@ -112,13 +113,15 @@ export default {
     },
     login: async (req, res, next)=>{
         try {
-            // Consulto si el mail del usuario existe
-            let user = await models.User.findOne({email:req.body.email});
+            // Consulto si el mail del usuario existe y el usuario es activo
+            let user = await models.User.findOne({email:req.body.email, activate:1});
             if (user){
                 //Compruebo que los password concuerdan
                 let match = await bcrypt.compare(req.body.password, user.password);
                 if (match){
-                    res.json('Password Correcto')
+                    //Si el usuario es correcto, genera el token y lo muestra
+                    let tokenReturn = await token.encode(user._id);
+                    res.status(200).json({user, tokenReturn})
                 }else{
                     res.status(404).send({
                         message: 'Password Incorrecto'
@@ -131,7 +134,7 @@ export default {
             }           
         } catch (error) {
             res.status(500).send({
-                message: 'Ocurrión un error'
+                message: 'Ocurrió un error en login'
             });
             next(e); 
         }
